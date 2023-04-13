@@ -1,5 +1,6 @@
 const express = require("express");
 const Joi = require("joi");
+const { v4: uuidv4 } = require("uuid");
 const contactsFunction = require("../../models/contacts.js");
 const router = express.Router();
 const validSchema = Joi.object({
@@ -36,7 +37,7 @@ router.post("/", async (req, res, next) => {
   const { name, email, phone } = req.body;
   const { error } = validSchema.validate({ name, email, phone });
   if (error) return res.status(400).json({ message: error.message });
-  const userId = Math.round(Math.random() * 1000000000000 + 1).toString();
+  const userId = uuidv4();
   const newUser = { id: userId, name, email, phone };
   await contactsFunction.addContact(newUser);
   res.status(201).json({ code: 201, data: { newUser } });
