@@ -1,4 +1,4 @@
-const models = require("../models/contactsDbFunc.js");
+const models = require("../models/contactsFunc.js");
 const get = async (req, res, next) => {
   try {
     const contacts = await models.listContacts();
@@ -40,10 +40,6 @@ const getById = async (req, res, next) => {
 
 const create = async (req, res, next) => {
   const { name, email, phone } = req.body;
-  if (req.body === null)
-    return res.status(400).json({ status: "error", message: "missing field" });
-  if (req.body === null)
-    return res.status(400).json({ status: "error", message: "missing field" });
   try {
     const newContact = await models.addContact({ name, email, phone });
     res.status(201).json({
@@ -59,8 +55,9 @@ const create = async (req, res, next) => {
 const update = async (req, res, next) => {
   const { contactId } = req.params;
   const { name, email, phone } = req.body;
-  if (name || email || phone === "")
+  if (!name || !email || !phone)
     return res.status(400).json({ status: "error", message: "missing field" });
+
   try {
     const updatedContact = await models.updateContact(contactId, {
       name,
