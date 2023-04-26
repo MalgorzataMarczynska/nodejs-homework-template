@@ -1,4 +1,5 @@
 const models = require("../models/contactsFunc.js");
+
 const get = async (req, res, next) => {
   try {
     const contacts = await models.listContacts();
