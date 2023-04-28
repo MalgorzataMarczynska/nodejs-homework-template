@@ -13,8 +13,8 @@ const params = {
 
 passport.use(
   new Strategy(params, function (payload, done) {
-    User.findOneById(payload.id)
-      .then(([user]) => {
+    User.findById(payload.id)
+      .then((user) => {
         if (!user) {
           return done(new Error("User not found"));
         }

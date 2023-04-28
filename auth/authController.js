@@ -77,10 +77,7 @@ const login = async (req, res, next) => {
 };
 const logout = async (req, res, next) => {
   const token = req.user.token;
-  const decodeJWT = jwt.decode(token, secretWord);
-  const user = await User.findOneById(decodeJWT.id);
-  const { id } = user;
-  if (!user) {
+  if (!token) {
     return res.status(401).json({
       status: "error",
       code: 401,
@@ -88,16 +85,24 @@ const logout = async (req, res, next) => {
       data: "Unauthorized",
     });
   }
+  const decodeJWT = jwt.decode(token);
+  const user = await User.findById(decodeJWT.id);
+  const { id } = user;
   try {
     await models.updateUser(id, { token: null });
+    res.json({
+      status: "No content",
+      code: 204,
+      data: "Not found",
+    });
   } catch (error) {
     next(error);
   }
 };
 const currentUser = async (req, res, next) => {
   const token = req.user.token;
-  const decodeJWT = jwt.decode(token, secretWord);
-  const user = await User.findOneById(decodeJWT.id);
+  const decodeJWT = jwt.decode(token);
+  const user = await User.findById(decodeJWT.id);
   const { email, subscription } = user;
   if (!user) {
     return res.status(401).json({
