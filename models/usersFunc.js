@@ -8,7 +8,10 @@ const getUserById = (userId) => {
 };
 
 const updateUser = (userId, body) => {
-  return User.findByIdAndUpdate({ _id: userId }, body, { new: true });
+  return User.findByIdAndUpdate({ _id: userId }, body, {
+    new: true,
+    runValidators: true,
+  });
 };
 
 const removeUser = (userId) => {

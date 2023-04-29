@@ -63,7 +63,7 @@ const login = async (req, res, next) => {
   try {
     const { id, email, subscription } = user;
     const payload = { id: id };
-    const token = jwt.sign(payload, secretWord, { expiresIn: "1h" });
+    const token = jwt.sign(payload, secretWord, { expiresIn: "2h" });
     await models.updateUser(id, { token: token });
     res.header("Authorization", `Bearer ${token}`);
     res.json({
@@ -122,4 +122,37 @@ const currentUser = async (req, res, next) => {
     next(error);
   }
 };
-module.exports = { auth, registration, login, logout, currentUser };
+const updateSubscription = async (req, res, next) => {
+  const token = req.user.token;
+  const decodeJWT = jwt.decode(token);
+  const user = await User.findById(decodeJWT.id);
+  const { id, email } = user;
+  const { subscription } = req.body;
+  if (!user) {
+    return res.status(401).json({
+      status: "error",
+      code: 401,
+      message: "Unauthorized",
+      data: "Unauthorized",
+    });
+  }
+  try {
+    await models.updateUser(id, { subscription });
+    res.json({
+      status: "Success",
+      code: 200,
+      data: { email, subscription },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+
+module.exports = {
+  auth,
+  registration,
+  login,
+  logout,
+  currentUser,
+  updateSubscription,
+};
