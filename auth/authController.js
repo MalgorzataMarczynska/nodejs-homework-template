@@ -7,7 +7,7 @@ const secretWord = process.env.SECRET;
 
 const auth = (req, res, next) => {
   passport.authenticate("jwt", { session: false }, (err, user) => {
-    if (!user || err) {
+    if (!user || err || !user.token) {
       return res.status(401).json({
         status: "error",
         code: 401,
@@ -63,7 +63,7 @@ const login = async (req, res, next) => {
   try {
     const { id, email, subscription } = user;
     const payload = { id: id };
-    const token = jwt.sign(payload, secretWord, { expiresIn: "2h" });
+    const token = jwt.sign(payload, secretWord, { expiresIn: "1h" });
     await models.updateUser(id, { token: token });
     res.header("Authorization", `Bearer ${token}`);
     res.json({
@@ -76,8 +76,7 @@ const login = async (req, res, next) => {
   }
 };
 const logout = async (req, res, next) => {
-  const token = req.user.token;
-  if (!token) {
+  if (!req.user.token) {
     return res.status(401).json({
       status: "error",
       code: 401,
@@ -85,11 +84,8 @@ const logout = async (req, res, next) => {
       data: "Unauthorized",
     });
   }
-  const decodeJWT = jwt.decode(token);
-  const user = await User.findById(decodeJWT.id);
-  const { id } = user;
   try {
-    await models.updateUser(id, { token: null });
+    await models.updateUser(req.user.id, { token: null });
     res.json({
       status: "No content",
       code: 204,
@@ -100,18 +96,7 @@ const logout = async (req, res, next) => {
   }
 };
 const currentUser = async (req, res, next) => {
-  const token = req.user.token;
-  const decodeJWT = jwt.decode(token);
-  const user = await User.findById(decodeJWT.id);
-  const { email, subscription } = user;
-  if (!user) {
-    return res.status(401).json({
-      status: "error",
-      code: 401,
-      message: "Unauthorized",
-      data: "Unauthorized",
-    });
-  }
+  const { email, subscription } = req.user;
   try {
     res.json({
       status: "Success",
@@ -123,19 +108,8 @@ const currentUser = async (req, res, next) => {
   }
 };
 const updateSubscription = async (req, res, next) => {
-  const token = req.user.token;
-  const decodeJWT = jwt.decode(token);
-  const user = await User.findById(decodeJWT.id);
-  const { id, email } = user;
+  const { id, email } = req.user;
   const { subscription } = req.body;
-  if (!user) {
-    return res.status(401).json({
-      status: "error",
-      code: 401,
-      message: "Unauthorized",
-      data: "Unauthorized",
-    });
-  }
   try {
     await models.updateUser(id, { subscription });
     res.json({
