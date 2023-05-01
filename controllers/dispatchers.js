@@ -1,14 +1,34 @@
 const models = require("../models/contactsFunc.js");
+
 const get = async (req, res, next) => {
+  const { page, limit, favorite } = req.query;
   try {
-    const contacts = await models.listContacts();
-    res.json({
-      status: "success",
-      code: 200,
-      data: {
-        contacts: contacts,
-      },
-    });
+    if (favorite === undefined || favorite === "") {
+      const contacts = await models.listContacts(req.query);
+      const countContacts = await models.countContacts();
+      res.json({
+        status: "success",
+        code: 200,
+        countContacts,
+        totalPages: Math.ceil(countContacts / limit),
+        currentPage: page,
+        data: {
+          contacts: contacts,
+        },
+      });
+    } else {
+      const contacts = await models.filterContacts(favorite);
+      const countContacts = await models.countfilteredContacts(favorite);
+      res.json({
+        status: "success",
+        code: 200,
+        countContacts,
+        totalPages: Math.ceil(countContacts / limit),
+        data: {
+          filteredContacts: contacts,
+        },
+      });
+    }
   } catch (e) {
     console.error(e);
     next(e);
