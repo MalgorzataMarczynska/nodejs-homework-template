@@ -7,7 +7,8 @@ const secretWord = process.env.SECRET;
 
 const auth = (req, res, next) => {
   passport.authenticate("jwt", { session: false }, (err, user) => {
-    if (!user || err || !user.token) {
+    const token = req.headers.authorization.split(" ")[1];
+    if (!user || err || user.token !== token) {
       return res.status(401).json({
         status: "error",
         code: 401,
@@ -76,14 +77,6 @@ const login = async (req, res, next) => {
   }
 };
 const logout = async (req, res, next) => {
-  if (!req.user.token) {
-    return res.status(401).json({
-      status: "error",
-      code: 401,
-      message: "Unauthorized",
-      data: "Unauthorized",
-    });
-  }
   try {
     await models.updateUser(req.user.id, { token: null });
     res.json({
