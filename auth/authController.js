@@ -1,5 +1,6 @@
 const jwt = require("jsonwebtoken");
 const passport = require("passport");
+const gravatar = require("gravatar");
 const User = require("../models/schemas/user.js");
 const models = require("../models/usersFunc.js");
 require("dotenv").config();
@@ -35,8 +36,16 @@ const registration = async (req, res, next) => {
     });
   }
   try {
-    const newUser = new User({ email, subscription: "starter" });
+    const avatar = gravatar.url(email, {
+      s: "100",
+      format: "jpg",
+    });
+    const newUser = new User({
+      email,
+      subscription: "starter",
+    });
     newUser.setPassword(password);
+    newUser.setAvatar(avatar);
     await newUser.save();
     res.status(201).json({
       status: "Success",
@@ -62,7 +71,7 @@ const login = async (req, res, next) => {
     });
   }
   try {
-    const { id, email, subscription } = user;
+    const { id, email, subscription, avatar } = user;
     const payload = { id: id };
     const token = jwt.sign(payload, secretWord, { expiresIn: "1h" });
     await models.updateUser(id, { token: token });
@@ -70,7 +79,7 @@ const login = async (req, res, next) => {
     res.json({
       status: "Success",
       code: 200,
-      data: { token: token, user: { email, subscription } },
+      data: { token: token, user: { email, subscription, avatar } },
     });
   } catch (error) {
     next(error);
@@ -114,6 +123,20 @@ const updateSubscription = async (req, res, next) => {
     next(error);
   }
 };
+const updateAvatar = async (req, res, next) => {
+  const { id } = req.user;
+  const { avatar } = req.file;
+  try {
+    await models.updateUser(id, { avatar });
+    res.json({
+      status: "Success",
+      code: 200,
+      data: { avatarURL: "" },
+    });
+  } catch (error) {
+    next(error);
+  }
+};
 
 module.exports = {
   auth,
@@ -122,4 +145,5 @@ module.exports = {
   logout,
   currentUser,
   updateSubscription,
+  updateAvatar,
 };

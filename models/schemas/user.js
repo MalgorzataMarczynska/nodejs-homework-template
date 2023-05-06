@@ -26,6 +26,9 @@ const user = new Schema(
       type: String,
       default: null,
     },
+    avatar: {
+      avatarURL: String,
+    },
     owner: {
       type: Schema.Types.ObjectId,
       ref: "user",
@@ -38,6 +41,9 @@ user.methods.setPassword = function (password) {
 };
 user.methods.validPassword = function (password) {
   return bCrypt.compareSync(password, this.password);
+};
+user.methods.setAvatar = function (avatarURL) {
+  this.avatar.avatarURL = avatarURL;
 };
 
 const User = mongoose.model("user", user);
