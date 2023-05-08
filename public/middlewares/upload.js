@@ -4,7 +4,7 @@ const path = require("path");
 const Jimp = require("jimp");
 const models = require("../../models/usersFunc.js");
 
-const UPLOAD_DIR = path.join(process.cwd(), "public", "upload");
+const UPLOAD_DIR = path.join(process.cwd(), "upload");
 const AVATAR_DIR = path.join(process.cwd(), "public", "avatars");
 const storage = multer.diskStorage({
   destination: (req, file, cb) => {
