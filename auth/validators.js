@@ -33,11 +33,29 @@ const userValidator = ({ subscription, password, email }) => {
 
   return isValid;
 };
-
+const loginValidator = async ({
+  userEmail,
+  userPassword,
+  email,
+  password,
+  subscription,
+}) => {
+  const userExists = email === userEmail;
+  const validPassword = password === userPassword;
+  const validSubscription =
+    subscription.includes("pro") ||
+    subscription.includes("starter") ||
+    subscription.includes("business");
+  const JWTtoken = "djfuehfhujg.djfievbf.djfidkmidkc";
+  if (userExists && validPassword && validSubscription)
+    return { code: 200, token: JWTtoken, user: { email, subscription } };
+  throw new Error("Bad credentials - user is not authorized");
+};
 module.exports = {
   passwordValidator,
   subscriptionValidator,
   tokenValidator,
   emailValidator,
   userValidator,
+  loginValidator,
 };
