@@ -1,8 +1,10 @@
 const express = require("express");
 const logger = require("morgan");
 const cors = require("cors");
+const path = require("path");
 const usersRouter = require("./routes/api/users");
 const contactsRouter = require("./routes/api/contacts");
+const storage = require("./public/middlewares/upload.js");
 
 const app = express();
 
@@ -11,6 +13,8 @@ const formatsLogger = app.get("env") === "development" ? "dev" : "short";
 app.use(logger(formatsLogger));
 app.use(cors());
 app.use(express.json());
+app.use(express.static(path.join(process.cwd(), "public")));
+app.use("/api/users/avatars", express.static(storage.AVATAR_DIR));
 
 require("./config/passportConfig.js");
 app.use("/api/users", usersRouter);
