@@ -5,6 +5,10 @@ const upload = require("../../public/middlewares/upload.js");
 
 router.post("/signup", authCtrl.registration);
 
+router.get("/verify/:verificationToken", authCtrl.verifyEmail);
+
+router.post("/verify/", authCtrl.secondVerifyEmail);
+
 router.post("/login", authCtrl.login);
 
 router.get("/current", authCtrl.auth, authCtrl.currentUser);

@@ -29,6 +29,15 @@ const user = new Schema(
     avatar: {
       avatarURL: String,
     },
+    verify: {
+      type: Boolean,
+      default: false,
+    },
+    verificationToken: {
+      type: String,
+      required: [validationOfVerificationToken, "Verify token is required"],
+      default: null,
+    },
     owner: {
       type: Schema.Types.ObjectId,
       ref: "user",
@@ -47,5 +56,9 @@ user.methods.setAvatar = function (avatarURL) {
 };
 
 const User = mongoose.model("user", user);
+function validationOfVerificationToken() {
+  if (User.verify === false) return typeof User.verificationToken === "string";
+  return User.verificationToken === null;
+}
 
 module.exports = User;

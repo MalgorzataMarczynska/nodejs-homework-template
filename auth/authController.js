@@ -1,6 +1,8 @@
 const jwt = require("jsonwebtoken");
 const passport = require("passport");
 const gravatar = require("gravatar");
+const { v4: uuidv4 } = require("uuid");
+const sgMail = require("@sendgrid/mail");
 const User = require("../models/schemas/user.js");
 const models = require("../models/usersFunc.js");
 require("dotenv").config();
@@ -40,17 +42,30 @@ const registration = async (req, res, next) => {
       s: "100",
       format: "jpg",
     });
+    const verificationToken = uuidv4();
     const newUser = new User({
       email,
       subscription: "starter",
+      verificationToken: verificationToken,
     });
     newUser.setPassword(password);
     newUser.setAvatar(avatar);
     await newUser.save();
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    const myEmail = process.env.MY_EMAIL;
+    const verificationEmail = {
+      to: [myEmail, { email }],
+      from: myEmail,
+      subject: "ContactPhoneBook verification email",
+      text: `Please confirm your email address at http://localhost3000/api/users/verify/${verificationToken}`,
+      html: `Please confirm your email address at <strong><a href="http://localhost3000/api/users/verify/${verificationToken}">www.localhost3000/api/users/verify/${verificationToken}</a></strong>`,
+    };
+    await sgMail.send(verificationEmail);
     res.status(201).json({
       status: "Success",
       code: 201,
-      message: "Registration successful",
+      message:
+        "Registration successful! Verification e-mail has just been sent, please verify your e-mail",
       data: { newUser },
     });
   } catch (error) {
@@ -62,11 +77,12 @@ const login = async (req, res, next) => {
   if (!email || !password)
     return res.status(400).json({ status: "error", message: "missing field" });
   const user = await User.findOne({ email });
-  if (!user || !user.validPassword(password)) {
+  if (!user || !user.validPassword(password) || !user.verify) {
     return res.status(401).json({
       status: "Unathorized",
       code: 401,
-      message: "Incorrect login or password",
+      message:
+        "Incorrect login or password or you are not verified your email yet. If you have not verified yet, please check your e-mail box or go to 'api/users/verify' to get second verify email",
       data: "Bad credentials",
     });
   }
@@ -137,6 +153,48 @@ const updateAvatar = async (req, res, next) => {
     next(error);
   }
 };
+const verifyEmail = async (req, res, next) => {
+  const { verificationToken } = req.params;
+  const user = await User.findOne({ verificationToken });
+  if (!user)
+    return res.status(404).json({ status: "error", message: "User not found" });
+  try {
+    await models.updateUser(user.id, { verificationToken: null, verify: true });
+    res.json({
+      status: "Verification successful",
+      code: 200,
+    });
+  } catch (error) {
+    next(error);
+  }
+};
+const secondVerifyEmail = async (req, res, next) => {
+  const { email } = req.body;
+  if (!email)
+    return res
+      .status(400)
+      .json({ status: "error", message: "missing required field email" });
+  const user = await User.findOne({ email });
+  if (user.verify)
+    return res
+      .status(400)
+      .json({ message: "Verification has already been passed" });
+  try {
+    sgMail.setApiKey(process.env.SENDGRID_API_KEY);
+    const myEmail = process.env.MY_EMAIL;
+    const verificationEmail = {
+      to: [myEmail, { email }],
+      from: myEmail,
+      subject: "ContactPhoneBook verification email",
+      text: `Please confirm your email address at http://localhost3000/api/users/verify/${user.verificationToken}`,
+      html: `Please confirm your email address at <strong><a href="http://localhost3000/api/users/verify/${user.verificationToken}">www.localhost3000/api/users/verify/${user.verificationToken}</a></strong>`,
+    };
+    await sgMail.send(verificationEmail);
+    res.json({ code: 200, message: "Verification email sent" });
+  } catch (error) {
+    next(error);
+  }
+};
 
 module.exports = {
   auth,
@@ -146,4 +204,6 @@ module.exports = {
   currentUser,
   updateSubscription,
   updateAvatar,
+  verifyEmail,
+  secondVerifyEmail,
 };
